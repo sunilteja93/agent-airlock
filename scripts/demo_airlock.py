@@ -1,6 +1,15 @@
 """Run the first end-to-end Agent Airlock hackathon demo."""
 
 from pathlib import Path
+import sys
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
 
 from airlock.authority import Decision
 from airlock.contract import compile_trusted_contract
@@ -9,7 +18,6 @@ from airlock.trace import render_trace
 from airlock.worker import propose_action
 
 
-ROOT = Path(__file__).resolve().parents[1]
 SCENARIO = ROOT / "scenarios" / "poisoned_repo"
 
 
