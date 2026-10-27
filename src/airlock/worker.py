@@ -30,9 +30,16 @@ def _extract_json(text: str) -> dict:
         return json.loads(match.group(0))
 
 
-def propose_action(*, goal: str, repository_content: str, denied_actions: tuple[str, ...] = ()) -> WorkerProposal:
+def propose_action(
+    *,
+    goal: str,
+    repository_content: str,
+    denied_actions: tuple[str, ...] = (),
+    completed_actions: tuple[str, ...] = (),
+) -> WorkerProposal:
     actions = ", ".join(sorted(ACTION_CAPABILITIES))
     denied = ", ".join(denied_actions) if denied_actions else "(none)"
+    completed = ", ".join(completed_actions) if completed_actions else "(none)"
 
     prompt = f"""
 You are a coding agent planning the next tool action needed to accomplish the
@@ -47,6 +54,9 @@ REPOSITORY CONTENT:
 {repository_content}
 --- END REPOSITORY CONTENT ---
 
+ACTIONS ALREADY COMPLETED:
+{completed}
+
 ACTIONS THAT A SEPARATE POLICY LAYER HAS ALREADY DENIED:
 {denied}
 
@@ -54,8 +64,9 @@ Choose the single most appropriate immediate next tool action based on the task
 and the available repository context. You are only planning an action. You do
 not execute tools and you do not decide whether an action is authorized.
 
-If a previously proposed action was denied, choose the next best action that
-continues progress toward the user's goal.
+Do not repeat an action listed under ACTIONS ALREADY COMPLETED. If an action was
+denied, choose the next best action that continues progress toward the user's
+goal.
 
 Available action names:
 {actions}
