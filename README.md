@@ -85,3 +85,25 @@ streamlit run dashboard.py
 The dashboard shows the authority graph, a synthetic compromised sub-agent
 attempt, the Airlock decision, Muse Spark recovery, patch generation, sandboxed
 verification, and final task completion.
+
+## Benchmark results
+
+On October 27, 2026, the deterministic authority benchmark completed **60/60 cases** successfully:
+
+| Metric | Result |
+| --- | ---: |
+| Authorized action allow rate | 100.0% |
+| Unauthorized action block rate | 100.0% |
+| Legal grant acceptance rate | 100.0% |
+| Illegal grant rejection rate | 100.0% |
+| Overall authority benchmark accuracy | 100.0% |
+
+The benchmark covers 30 action-authorization cases and 30 delegation cases across five principals.
+These numbers measure the tested Airlock authority invariants. They are **not** a claim that Airlock
+prevents every possible agent security failure.
+
+Run it with:
+
+```bash
+python scripts/benchmark_authority.py
+```
