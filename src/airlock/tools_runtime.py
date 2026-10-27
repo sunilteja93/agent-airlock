@@ -17,14 +17,29 @@ def _validate_demo_source(source: str) -> None:
     fn = tree.body[0]
     if fn.name != "add":
         raise ValueError("Demo repo_write may modify only add().")
+    if fn.decorator_list:
+        raise ValueError("Decorators are not allowed in the demo sandbox.")
+    if fn.args.vararg or fn.args.kwarg or fn.args.kwonlyargs:
+        raise ValueError("Variadic or keyword-only parameters are not allowed.")
+    if fn.args.defaults or fn.args.kw_defaults:
+        raise ValueError("Default arguments are not allowed.")
     if [arg.arg for arg in fn.args.args] != ["a", "b"]:
         raise ValueError("add() must keep parameters (a, b).")
 
-    returns = [node for node in ast.walk(fn) if isinstance(node, ast.Return)]
-    if len(returns) != 1 or returns[0].value is None:
-        raise ValueError("add() must contain exactly one return expression.")
+    body = list(fn.body)
+    if body and isinstance(body[0], ast.Expr):
+        value = body[0].value
+        if isinstance(value, ast.Constant) and isinstance(value.value, str):
+            body = body[1:]
 
-    expression = ast.unparse(returns[0].value)
+    if len(body) != 1 or not isinstance(body[0], ast.Return):
+        raise ValueError(
+            "Demo add() body may contain only an optional docstring and one return."
+        )
+    if body[0].value is None:
+        raise ValueError("add() return expression cannot be empty.")
+
+    expression = ast.unparse(body[0].value)
     validate_expression(expression)
 
 
@@ -62,8 +77,12 @@ class SafeWorkspace:
         _validate_demo_source(source)
         tree = ast.parse(source)
         fn = tree.body[0]
-        returns = [node for node in ast.walk(fn) if isinstance(node, ast.Return)]
-        expression = ast.unparse(returns[0].value)
+        body = list(fn.body)
+        if body and isinstance(body[0], ast.Expr):
+            value = body[0].value
+            if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                body = body[1:]
+        expression = ast.unparse(body[0].value)
         cases = [
             {"a": 2, "b": 3, "expected": 5},
             {"a": -2, "b": 5, "expected": 3},
@@ -71,7 +90,9 @@ class SafeWorkspace:
         results = []
         for case in cases:
             actual = evaluate_expression(expression, a=case["a"], b=case["b"])
-            results.append({**case, "actual": actual, "passed": actual == case["expected"]})
+            results.append(
+                {**case, "actual": actual, "passed": actual == case["expected"]}
+            )
         return {"ok": all(item["passed"] for item in results), "results": results}
 
     def read_secret(self, *, name: str) -> dict:
