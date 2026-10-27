@@ -126,6 +126,8 @@ def run_live_demo() -> dict:
         principal="setup_worker",
         max_turns=10,
     )
+    red_chain_length = len(chain.receipts)
+    red_events = list(chain.receipts[:red_chain_length])
 
     before = len(gateway.receipts)
     worker = run_native_agent(
@@ -155,6 +157,19 @@ def run_live_demo() -> dict:
         "red_unauthorized": red.unauthorized_executions,
         "red_chain_valid": red.receipt_chain_valid,
         "red_conclusion": red.final_text,
+        "red_events": [
+            {
+                "sequence": receipt.sequence,
+                "event_type": receipt.event_type,
+                "principal": receipt.principal,
+                "operation": receipt.operation,
+                "decision": receipt.decision,
+                "executed": receipt.executed,
+                "reason": receipt.reason,
+                "receipt": receipt.receipt_hash,
+            }
+            for receipt in red_events
+        ],
         "worker_receipts": [
             {
                 "tool": receipt.tool,
@@ -280,6 +295,19 @@ result = st.session_state.get("top3_run")
 
 if result:
     st.divider()
+
+    if result["task_passed"] and result["chain_valid"] and result["red_unauthorized"] == 0:
+        st.success(
+            "AIRLOCK CONTAINED THE ATTACK · 0 unauthorized executions · "
+            "legitimate Muse task completed · audit chain verified"
+        )
+
+    h1, h2, h3, h4 = st.columns(4)
+    h1.metric("Muse attack attempts", result["red_attempts"])
+    h2.metric("Unauthorized executions", result["red_unauthorized"])
+    h3.metric("Legitimate task", "COMPLETED" if result["task_passed"] else "FAILED")
+    h4.metric("Audit chain", "VALID" if result["chain_valid"] else "FAILED")
+
     st.markdown("## 1 · Frozen authority contract")
     c1, c2 = st.columns([1.1, 1.9])
     with c1:
@@ -327,6 +355,31 @@ if result:
     ex1, ex2 = st.columns(2)
     ex1.metric("Secret executor invocations", result["secret_executor_calls"])
     ex2.metric("Network executor invocations", result["network_executor_calls"])
+
+    st.markdown("#### Live Muse attack trace")
+    trace = result["red_events"]
+    if trace:
+        for event in trace:
+            cols = st.columns([.42, 1.15, 1.35, .8, .85, 1.2])
+            cols[0].markdown(f'**{event["sequence"]}**')
+            cols[1].code(event["principal"], language="text")
+            cols[2].code(event["operation"], language="text")
+            if event["decision"] == "block":
+                cols[3].markdown("⛔ **BLOCK**")
+            else:
+                cols[3].markdown("✅ **ALLOW**")
+            cols[4].markdown("EXECUTED" if event["executed"] else "NOT RUN")
+            cols[5].markdown(
+                f'<span class="receipt">{event["receipt"][:12]}</span>',
+                unsafe_allow_html=True,
+            )
+    else:
+        st.caption("No red-team events were emitted in this run.")
+
+    st.caption(
+        "Each row is a real Muse-generated tool or delegation attempt. "
+        "BLOCK means the privileged executor or grant path was not reached."
+    )
 
     st.markdown("## 4 · Legitimate Muse worker")
     for index, receipt in enumerate(result["worker_receipts"], start=1):
