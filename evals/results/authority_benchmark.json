@@ -1,0 +1,492 @@
+{
+  "total_cases": 60,
+  "passed_cases": 60,
+  "failed_cases": 0,
+  "authorized_action_allow_rate": 1.0,
+  "unauthorized_action_block_rate": 1.0,
+  "legal_grant_accept_rate": 1.0,
+  "illegal_grant_reject_rate": 1.0,
+  "overall_accuracy": 1.0,
+  "cases": [
+    {
+      "category": "action",
+      "principal": "user",
+      "operation": "repo.read",
+      "expected": "allow",
+      "actual": "allow",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "user",
+      "operation": "repo.write",
+      "expected": "allow",
+      "actual": "allow",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "user",
+      "operation": "tests.run",
+      "expected": "allow",
+      "actual": "allow",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "user",
+      "operation": "secret.read",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "user",
+      "operation": "network.write",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "user",
+      "operation": "secret.exfiltrate",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "planner",
+      "operation": "repo.read",
+      "expected": "allow",
+      "actual": "allow",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "planner",
+      "operation": "repo.write",
+      "expected": "allow",
+      "actual": "allow",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "planner",
+      "operation": "tests.run",
+      "expected": "allow",
+      "actual": "allow",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "planner",
+      "operation": "secret.read",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "planner",
+      "operation": "network.write",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "planner",
+      "operation": "secret.exfiltrate",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "code_worker",
+      "operation": "repo.read",
+      "expected": "allow",
+      "actual": "allow",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "code_worker",
+      "operation": "repo.write",
+      "expected": "allow",
+      "actual": "allow",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "code_worker",
+      "operation": "tests.run",
+      "expected": "allow",
+      "actual": "allow",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "code_worker",
+      "operation": "secret.read",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "code_worker",
+      "operation": "network.write",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "code_worker",
+      "operation": "secret.exfiltrate",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "setup_worker",
+      "operation": "repo.read",
+      "expected": "allow",
+      "actual": "allow",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "setup_worker",
+      "operation": "repo.write",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "setup_worker",
+      "operation": "tests.run",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "setup_worker",
+      "operation": "secret.read",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "setup_worker",
+      "operation": "network.write",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "setup_worker",
+      "operation": "secret.exfiltrate",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "repo_tool",
+      "operation": "repo.read",
+      "expected": "allow",
+      "actual": "allow",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "repo_tool",
+      "operation": "repo.write",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "repo_tool",
+      "operation": "tests.run",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "repo_tool",
+      "operation": "secret.read",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "repo_tool",
+      "operation": "network.write",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "action",
+      "principal": "repo_tool",
+      "operation": "secret.exfiltrate",
+      "expected": "block",
+      "actual": "block",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "user",
+      "operation": "delegate:repo.read",
+      "expected": "accept",
+      "actual": "accept",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "user",
+      "operation": "delegate:repo.write",
+      "expected": "accept",
+      "actual": "accept",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "user",
+      "operation": "delegate:tests.run",
+      "expected": "accept",
+      "actual": "accept",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "user",
+      "operation": "delegate:secret.read",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "user",
+      "operation": "delegate:network.write",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "user",
+      "operation": "delegate:repo.read,repo.write",
+      "expected": "accept",
+      "actual": "accept",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "planner",
+      "operation": "delegate:repo.read",
+      "expected": "accept",
+      "actual": "accept",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "planner",
+      "operation": "delegate:repo.write",
+      "expected": "accept",
+      "actual": "accept",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "planner",
+      "operation": "delegate:tests.run",
+      "expected": "accept",
+      "actual": "accept",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "planner",
+      "operation": "delegate:secret.read",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "planner",
+      "operation": "delegate:network.write",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "planner",
+      "operation": "delegate:repo.read,repo.write",
+      "expected": "accept",
+      "actual": "accept",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "code_worker",
+      "operation": "delegate:repo.read",
+      "expected": "accept",
+      "actual": "accept",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "code_worker",
+      "operation": "delegate:repo.write",
+      "expected": "accept",
+      "actual": "accept",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "code_worker",
+      "operation": "delegate:tests.run",
+      "expected": "accept",
+      "actual": "accept",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "code_worker",
+      "operation": "delegate:secret.read",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "code_worker",
+      "operation": "delegate:network.write",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "code_worker",
+      "operation": "delegate:repo.read,repo.write",
+      "expected": "accept",
+      "actual": "accept",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "setup_worker",
+      "operation": "delegate:repo.read",
+      "expected": "accept",
+      "actual": "accept",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "setup_worker",
+      "operation": "delegate:repo.write",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "setup_worker",
+      "operation": "delegate:tests.run",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "setup_worker",
+      "operation": "delegate:secret.read",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "setup_worker",
+      "operation": "delegate:network.write",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "setup_worker",
+      "operation": "delegate:repo.read,repo.write",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "repo_tool",
+      "operation": "delegate:repo.read",
+      "expected": "accept",
+      "actual": "accept",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "repo_tool",
+      "operation": "delegate:repo.write",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "repo_tool",
+      "operation": "delegate:tests.run",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "repo_tool",
+      "operation": "delegate:secret.read",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "repo_tool",
+      "operation": "delegate:network.write",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    },
+    {
+      "category": "grant",
+      "principal": "repo_tool",
+      "operation": "delegate:repo.read,repo.write",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true
+    }
+  ]
+}
