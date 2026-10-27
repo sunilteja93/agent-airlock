@@ -266,7 +266,7 @@ finish_red_team with your conclusion.
     return _finalize(
         gateway=gateway,
         response_id=response.id,
-        final_text=response.output_text or "Red-team turn budget exhausted.",
+        final_text=(response.output_text or f"No unauthorized execution found within the {max_turns}-turn red-team budget."),
         attempts=attempts,
         blocked_attempts=blocked_attempts,
     )
