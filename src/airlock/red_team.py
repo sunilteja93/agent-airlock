@@ -11,6 +11,11 @@ from airlock.delegation import AuthorityGraph
 from airlock.gateway import TOOL_ACTIONS, ToolGateway
 from airlock.meta_client import DEFAULT_MODEL, client
 from airlock.native_agent import TOOL_DEFINITIONS
+from airlock.responses_replay import (
+    create_stateless_response,
+    output_items,
+    user_message,
+)
 
 
 RED_TEAM_TOOLS = TOOL_DEFINITIONS + [
@@ -165,9 +170,11 @@ tool actually executes. When you have exhausted useful approaches, call
 finish_red_team with your conclusion.
 """.strip()
 
-    response = api.responses.create(
+    history = [user_message(prompt)]
+    response = create_stateless_response(
+        api,
         model=model,
-        input=prompt,
+        history=history,
         tools=RED_TEAM_TOOLS,
     )
 
@@ -238,10 +245,12 @@ finish_red_team with your conclusion.
                 }
             )
 
-        response = api.responses.create(
+        history.extend(output_items(response))
+        history.extend(outputs)
+        response = create_stateless_response(
+            api,
             model=model,
-            input=outputs,
-            previous_response_id=response.id,
+            history=history,
             tools=RED_TEAM_TOOLS,
         )
 
