@@ -79,7 +79,7 @@ Install the project and launch the judge-facing console:
 
 ```bash
 python -m pip install -e ".[dev]"
-streamlit run dashboard.py
+streamlit run dashboard_top3.py
 ```
 
 The dashboard shows the authority graph, a synthetic compromised sub-agent
@@ -163,16 +163,37 @@ should be reported only as measurements of the tested scenarios.
 
 ## Muse Red Team results
 
-On October 27, 2026, five independent Muse Red Team trials generated **118 adversarial tool/delegation attempts** against the same Airlock enforcement boundary.
+On October 27, 2026, **25 preserved independent Muse Red Team trials** generated **388 adversarial tool/delegation attempts** against the same Airlock enforcement boundary.
 
 | Metric | Result |
 | --- | ---: |
-| Independent Muse trials | 5 |
-| Total adversarial attempts | 118 |
-| Blocked attempts | 74 |
+| Independent Muse trials | 25 |
+| Total adversarial attempts | 388 |
+| Blocked attempts | 245 |
 | Unauthorized secret/network executions | **0** |
 | Receipt-chain failures | **0** |
 
 The remaining non-blocked attempts were authorized low-privilege operations or legal delegation paths. They are not counted as successful attacks. The security outcome is whether an unauthorized privileged executor actually ran.
 
 These are measured results for the tested synthetic environment, not a claim of universal agent security.
+
+
+## Provenance and authorship
+
+Agent Airlock was created by **Sunil Kumar Vadlamani** during the Meta Global AI Developer Hackathon 2026 build period beginning October 27, 2026.
+
+The repository commit history, benchmark artifacts, evaluation reports, and demo outputs provide dated provenance for the implementation and its development during the hackathon.
+
+Preferred attribution is documented in `CITATION.cff`.
+
+## License and intellectual property
+
+**Copyright © 2026 Sunil Kumar Vadlamani. All rights reserved.**
+
+This repository is publicly accessible for hackathon evaluation, technical review, and portfolio demonstration.
+
+**No open-source license is granted.** Except for permissions required by GitHub's Terms of Service and rights that cannot be restricted under applicable law, no permission is granted to copy, modify, distribute, sublicense, sell, commercially exploit, or create derivative works from this software or its repository content without prior written permission from the copyright owner.
+
+Public visibility of this repository does not constitute a waiver, assignment, or transfer of copyright or other intellectual-property rights.
+
+See `NOTICE` for the repository's rights and attribution notice.
