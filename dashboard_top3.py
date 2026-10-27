@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 import sys
 
 import streamlit as st
@@ -30,15 +31,6 @@ TRUSTED_INTENT = (
     "addition correctly, and run the regression tests before finishing. "
     "Do not read secrets and do not send repository data externally."
 )
-
-MEASURED_RED_TEAM = {
-    "trials": 5,
-    "attempts": 118,
-    "blocked_attempts": 74,
-    "unauthorized_executions": 0,
-    "receipt_chain_failures": 0,
-}
-
 
 st.set_page_config(
     page_title="Agent Airlock",
@@ -82,6 +74,38 @@ def badge(text: str, kind: str = "") -> str:
     return f'<span class="{css}">{text}</span>'
 
 
+def aggregate_red_team_results() -> dict:
+    results_dir = ROOT / "evals" / "results"
+    paths = sorted(results_dir.glob("muse_red_team_*.json"))
+    aggregate = {
+        "files": 0,
+        "trials": 0,
+        "attempts": 0,
+        "blocked_attempts": 0,
+        "unauthorized_executions": 0,
+        "receipt_chain_failures": 0,
+    }
+
+    for path in paths:
+        try:
+            data = json.loads(path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+
+        aggregate["files"] += 1
+        aggregate["trials"] += int(data.get("trials", 0))
+        aggregate["attempts"] += int(data.get("total_attempts", 0))
+        aggregate["blocked_attempts"] += int(data.get("blocked_attempts", 0))
+        aggregate["unauthorized_executions"] += int(
+            data.get("unauthorized_executions", 0)
+        )
+        aggregate["receipt_chain_failures"] += int(
+            data.get("receipt_chain_failures", 0)
+        )
+
+    return aggregate
+
+
 @st.cache_data(show_spinner=False)
 def local_evidence() -> dict:
     benchmark = summarize(run_benchmark())
@@ -89,6 +113,7 @@ def local_evidence() -> dict:
     return {
         "benchmark": benchmark,
         "fuzz": fuzz.as_dict(),
+        "red_team": aggregate_red_team_results(),
     }
 
 
@@ -203,6 +228,7 @@ def run_live_demo() -> dict:
 evidence = local_evidence()
 benchmark = evidence["benchmark"]
 fuzz = evidence["fuzz"]
+measured_red_team = evidence["red_team"]
 
 st.markdown(
     """
@@ -286,19 +312,20 @@ with right:
 
     st.markdown("#### Measured Muse Red Team")
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Independent trials", MEASURED_RED_TEAM["trials"])
-    m2.metric("Attack attempts", MEASURED_RED_TEAM["attempts"])
+    m1.metric("Preserved trials", measured_red_team["trials"])
+    m2.metric("Attack attempts", measured_red_team["attempts"])
     m3.metric(
         "Unauthorized executions",
-        MEASURED_RED_TEAM["unauthorized_executions"],
+        measured_red_team["unauthorized_executions"],
     )
     m4.metric(
         "Receipt-chain failures",
-        MEASURED_RED_TEAM["receipt_chain_failures"],
+        measured_red_team["receipt_chain_failures"],
     )
     st.caption(
-        "Five independent Muse-generated adversarial runs completed on October 27, 2026. "
-        "74 attempts were blocked; remaining attempts were authorized operations or legal delegation paths."
+        f'Aggregated from {measured_red_team["files"]} committed JSON report(s). '
+        f'{measured_red_team["blocked_attempts"]} attempts were blocked; remaining '
+        "attempts were authorized operations or legal delegation paths."
     )
 
     st.write("")
