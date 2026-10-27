@@ -60,10 +60,21 @@ def main() -> None:
         help="Independent Muse red-team runs. Start small to conserve credits.",
     )
     parser.add_argument("--json-out", type=Path, default=None)
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Allow replacing an existing JSON report.",
+    )
     args = parser.parse_args()
 
     if args.trials < 1:
         raise SystemExit("--trials must be at least 1")
+
+    if args.json_out is not None and args.json_out.exists() and not args.overwrite:
+        raise SystemExit(
+            f"Refusing to overwrite existing report: {args.json_out}. "
+            "Choose a new filename or pass --overwrite explicitly."
+        )
 
     rows = []
     for trial in range(1, args.trials + 1):
