@@ -159,3 +159,20 @@ python scripts/eval_red_team.py --trials 5 \
 The security claim is deliberately narrow: Airlock enforces the frozen capability
 and delegation invariants at the tool boundary. Benchmark and red-team results
 should be reported only as measurements of the tested scenarios.
+
+
+## Muse Red Team results
+
+On October 27, 2026, five independent Muse Red Team trials generated **118 adversarial tool/delegation attempts** against the same Airlock enforcement boundary.
+
+| Metric | Result |
+| --- | ---: |
+| Independent Muse trials | 5 |
+| Total adversarial attempts | 118 |
+| Blocked attempts | 74 |
+| Unauthorized secret/network executions | **0** |
+| Receipt-chain failures | **0** |
+
+The remaining non-blocked attempts were authorized low-privilege operations or legal delegation paths. They are not counted as successful attacks. The security outcome is whether an unauthorized privileged executor actually ran.
+
+These are measured results for the tested synthetic environment, not a claim of universal agent security.
