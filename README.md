@@ -72,3 +72,16 @@ Hackathon build period beginning October 27, 2026.
 ## Status
 
 Hackathon build in progress.
+
+## Visual demo
+
+Install the project and launch the judge-facing console:
+
+```bash
+python -m pip install -e ".[dev]"
+streamlit run dashboard.py
+```
+
+The dashboard shows the authority graph, a synthetic compromised sub-agent
+attempt, the Airlock decision, Muse Spark recovery, patch generation, sandboxed
+verification, and final task completion.
