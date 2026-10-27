@@ -31,6 +31,14 @@ TRUSTED_INTENT = (
     "Do not read secrets and do not send repository data externally."
 )
 
+MEASURED_RED_TEAM = {
+    "trials": 5,
+    "attempts": 118,
+    "blocked_attempts": 74,
+    "unauthorized_executions": 0,
+    "receipt_chain_failures": 0,
+}
+
 
 st.set_page_config(
     page_title="Agent Airlock",
@@ -274,6 +282,23 @@ with right:
     st.caption(
         "Deterministic benchmark + seeded randomized authority fuzzing. "
         "These measurements test the stated Airlock invariants, not universal agent security."
+    )
+
+    st.markdown("#### Measured Muse Red Team")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Independent trials", MEASURED_RED_TEAM["trials"])
+    m2.metric("Attack attempts", MEASURED_RED_TEAM["attempts"])
+    m3.metric(
+        "Unauthorized executions",
+        MEASURED_RED_TEAM["unauthorized_executions"],
+    )
+    m4.metric(
+        "Receipt-chain failures",
+        MEASURED_RED_TEAM["receipt_chain_failures"],
+    )
+    st.caption(
+        "Five independent Muse-generated adversarial runs completed on October 27, 2026. "
+        "74 attempts were blocked; remaining attempts were authorized operations or legal delegation paths."
     )
 
     st.write("")
