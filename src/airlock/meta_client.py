@@ -21,10 +21,12 @@ def client() -> OpenAI:
     return OpenAI(base_url=META_BASE_URL, api_key=api_key)
 
 
+def complete(prompt: str, model: str = DEFAULT_MODEL) -> str:
+    """Return plain text from a Meta Model API Responses request."""
+    response = client().responses.create(model=model, input=prompt)
+    return response.output_text
+
+
 def ping(model: str = DEFAULT_MODEL) -> str:
     """Make the smallest connectivity check against Muse Spark."""
-    response = client().responses.create(
-        model=model,
-        input="Reply with the single word: ready",
-    )
-    return response.output_text
+    return complete("Reply with the single word: ready", model=model)
