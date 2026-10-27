@@ -1,6 +1,6 @@
 # Agent Airlock
 
-A provenance and authority layer for autonomous AI agents.
+A provenance and authority layer for autonomous and multi-agent AI systems.
 
 Built from scratch for the Meta Global AI Developer Hackathon 2026.
 
@@ -8,42 +8,67 @@ Built from scratch for the Meta Global AI Developer Hackathon 2026.
 
 **Information is not authority.**
 
-AI agents routinely consume untrusted content from repositories, webpages,
-documents, tool outputs, and external services. That content may provide useful
-information, but it should not automatically gain the authority to cause
-privileged actions.
+AI agents consume repositories, webpages, documents, tool outputs, plugins, and
+messages from other agents. Those inputs can provide useful information without
+automatically gaining permission to cause privileged actions.
 
-Agent Airlock places an explicit authority boundary between an autonomous agent
-and the tools it can use.
+Agent Airlock places an explicit authority boundary between agent reasoning and
+real-world capabilities.
+
+## What Airlock adds
+
+### Trusted task contracts
+
+A user objective is reduced to a capability envelope such as:
+
+- `repo.read`
+- `repo.write`
+- `tests.run`
+
+Capabilities outside that envelope, such as `secret.read` or
+`network.write`, are not implicitly granted by external content.
+
+### Authority graph
+
+Authority can be delegated across agents, but only as a subset of authority the
+parent already holds.
+
+Example:
+
+```text
+user
+  └─ planner          [repo.read, repo.write, tests.run]
+      └─ code_worker  [repo.read, repo.write, tests.run]
+          └─ setup_worker [repo.read]
+```
+
+If `setup_worker` is compromised and proposes `secret.read`, Airlock blocks
+the action because there is no valid grant path for that capability.
+
+### Meta-powered recovery
+
+Muse Spark is used as a worker inside the authority boundary. After a denied
+action, the worker can continue toward the legitimate user goal using the
+capabilities that remain authorized.
+
+## Evaluation philosophy
+
+Airlock does not depend on making a Meta model fail.
+
+The threat model assumes that any agent, sub-agent, plugin, tool response, or
+external content source may be buggy, manipulated, or compromised. The
+security question is whether that component can acquire authority it was never
+delegated.
+
+The repository also contains adversarial prompt-injection experiments. Early
+neutral-prompt runs showed Muse Spark ignoring the tested obvious injections,
+which is recorded rather than hidden or forced into an artificial failure.
 
 ## Hackathon scope
 
-This repository contains the work created during the Meta Global AI Developer
+This repository contains work created during the Meta Global AI Developer
 Hackathon build period beginning October 27, 2026.
-
-The initial demo will:
-
-1. Compile a trusted user request into a task contract.
-2. Let a Meta-powered worker agent inspect an adversarial repository.
-3. Track the provenance of instructions that influence proposed tool actions.
-4. Allow, constrain, or block actions based on the authority available to their source.
-5. Continue the legitimate user task after an injected instruction is blocked.
-6. Produce an action-lineage trace explaining the decision.
-
-## Initial demo scenario
-
-A user asks an agent to fix a repository issue. The repository contains a
-malicious instruction asking the agent to read a secret and transmit it
-externally.
-
-The repository is allowed to contribute information about the codebase, but it
-has no authority to grant `secret.read` or `network.write`.
-
-Airlock blocks the unauthorized action while allowing the agent to continue the
-original task.
 
 ## Status
 
 Hackathon build in progress.
-
-Official build start: October 27, 2026.
