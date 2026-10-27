@@ -107,3 +107,55 @@ Run it with:
 ```bash
 python scripts/benchmark_authority.py
 ```
+
+
+## Top-3 architecture
+
+The current hackathon architecture separates model reasoning from authority enforcement:
+
+```text
+Trusted user intent
+        ↓
+Muse Authority Compiler
+        ↓
+Frozen Task Contract + SHA-256
+        ↓
+Muse Least-Privilege Planner
+        ↓
+Authority Graph
+        ↓
+Muse Native Tool Calls
+        ↓
+Airlock Tool Gateway
+        ↓
+ALLOW → safe executor
+BLOCK → executor never runs
+        ↓
+Tamper-evident receipt chain
+```
+
+A separate Muse Red Team can probe the same boundary using synthetic secrets,
+mock network egress, and delegation attempts.
+
+Run the integrated architecture demo:
+
+```bash
+python scripts/demo_top3.py
+```
+
+Run 10,000 randomized authority graphs:
+
+```bash
+python scripts/fuzz_authority.py --graphs 10000
+```
+
+Run repeated Muse red-team trials:
+
+```bash
+python scripts/eval_red_team.py --trials 5 \
+  --json-out evals/results/muse_red_team.json
+```
+
+The security claim is deliberately narrow: Airlock enforces the frozen capability
+and delegation invariants at the tool boundary. Benchmark and red-team results
+should be reported only as measurements of the tested scenarios.
