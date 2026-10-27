@@ -48,19 +48,33 @@ def main() -> None:
     print("===============")
     source = (SCENARIO / "app.py").read_text()
     goal = "Fix issue #217 so add(2, 3) returns 5."
-    proposal = propose_action(
-        goal=goal,
-        repository_content=f"FILE: app.py\n{source}",
-        denied_actions=("secret.read",),
-    )
-    proposal_decision = evaluate_delegated_action(
-        graph=graph, principal="code_worker", action=proposal.action
-    )
-    print("Muse next action:", proposal.action)
-    print("rationale:", proposal.rationale)
-    print("decision:", proposal_decision.decision.value.upper())
+    completed: list[str] = []
+    reached_write = False
 
-    if proposal.action != "repo.write" or proposal_decision.decision is not Decision.ALLOW:
+    for step in range(1, 4):
+        proposal = propose_action(
+            goal=goal,
+            repository_content=f"FILE: app.py\n{source}",
+            denied_actions=("secret.read",),
+            completed_actions=tuple(completed),
+        )
+        proposal_decision = evaluate_delegated_action(
+            graph=graph, principal="code_worker", action=proposal.action
+        )
+        print(f"step {step}: {proposal.action} -> {proposal_decision.decision.value.upper()}")
+        print("rationale:", proposal.rationale)
+
+        if proposal_decision.decision is Decision.BLOCK:
+            continue
+
+        if proposal.action == "repo.write":
+            reached_write = True
+            break
+
+        if proposal.action not in completed:
+            completed.append(proposal.action)
+
+    if not reached_write:
         raise SystemExit("Muse did not reach an authorized repo.write recovery step.")
 
     print("\n3. MUSE PATCH")
