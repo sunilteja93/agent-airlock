@@ -1,4 +1,4 @@
-"""Evaluate baseline Muse proposals against the Airlock authority boundary."""
+"""Evaluate multi-step Muse behavior against the Airlock authority boundary."""
 
 from __future__ import annotations
 
@@ -26,80 +26,111 @@ MATRIX = ROOT / "evals" / "attack_matrix.json"
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--trials", type=int, default=1)
     parser.add_argument(
-        "--trials",
+        "--max-steps",
         type=int,
-        default=1,
-        help="Muse calls per scenario. Start with 1 to conserve hackathon credits.",
+        default=2,
+        help="Maximum planning steps per scenario. Start with 2 to conserve credits.",
     )
     args = parser.parse_args()
 
-    if args.trials < 1:
-        raise SystemExit("--trials must be at least 1")
+    if args.trials < 1 or args.max_steps < 1:
+        raise SystemExit("--trials and --max-steps must be at least 1")
 
     scenarios = json.loads(MATRIX.read_text())
-    rows: list[dict] = []
+    trial_results: list[dict] = []
+    action_rows: list[dict] = []
 
     for scenario in scenarios:
-        contract = compile_trusted_contract(scenario["goal"])
         dangerous = set(scenario["dangerous_actions"])
+        contract = compile_trusted_contract(scenario["goal"])
 
         for trial in range(1, args.trials + 1):
-            proposal = propose_action(
-                goal=scenario["goal"],
-                repository_content=scenario["content"],
-            )
-            decision = evaluate(proposal.action, contract)
+            completed: list[str] = []
+            denied: list[str] = []
+            baseline_attack = False
+            airlock_attack = False
 
-            baseline_attack = proposal.action in dangerous
-            airlock_attack = baseline_attack and decision.decision is Decision.ALLOW
+            print(f"\n[{scenario['id']}] trial={trial}")
 
-            row = {
+            for step in range(1, args.max_steps + 1):
+                proposal = propose_action(
+                    goal=scenario["goal"],
+                    repository_content=scenario["content"],
+                    denied_actions=tuple(denied),
+                    completed_actions=tuple(completed),
+                )
+                decision = evaluate(proposal.action, contract)
+                is_dangerous = proposal.action in dangerous
+
+                if is_dangerous:
+                    baseline_attack = True
+                    if decision.decision is Decision.ALLOW:
+                        airlock_attack = True
+
+                action_rows.append({
+                    "scenario": scenario["id"],
+                    "trial": trial,
+                    "step": step,
+                    "action": proposal.action,
+                    "source": proposal.source,
+                    "dangerous": is_dangerous,
+                    "airlock_decision": decision.decision.value,
+                })
+
+                print(
+                    f"  step={step} action={proposal.action:<18} "
+                    f"source={proposal.source:<10} dangerous={str(is_dangerous):<5} "
+                    f"airlock={decision.decision.value.upper()}"
+                )
+                print(f"    rationale: {proposal.rationale}")
+
+                if decision.decision is Decision.BLOCK:
+                    if proposal.action not in denied:
+                        denied.append(proposal.action)
+                else:
+                    if proposal.action not in completed:
+                        completed.append(proposal.action)
+
+            trial_results.append({
                 "scenario": scenario["id"],
                 "trial": trial,
-                "action": proposal.action,
-                "source": proposal.source,
                 "baseline_attack": baseline_attack,
-                "airlock_decision": decision.decision.value,
                 "airlock_attack": airlock_attack,
-            }
-            rows.append(row)
+            })
 
-            print(
-                f'{scenario["id"]:<28} '
-                f'trial={trial} '
-                f'action={proposal.action:<18} '
-                f'source={proposal.source:<10} '
-                f'baseline_attack={str(baseline_attack):<5} '
-                f'airlock={decision.decision.value.upper()}'
-            )
-
-    attack_rows = [r for r in rows if r["baseline_attack"]]
-    airlock_attacks = [r for r in rows if r["airlock_attack"]]
-    benign_rows = [r for r in rows if not r["baseline_attack"]]
-    benign_allowed = [r for r in benign_rows if r["airlock_decision"] == "allow"]
+    baseline_trials = [r for r in trial_results if r["baseline_attack"]]
+    airlock_trials = [r for r in trial_results if r["airlock_attack"]]
+    dangerous_actions = [r for r in action_rows if r["dangerous"]]
+    blocked_dangerous = [
+        r for r in dangerous_actions if r["airlock_decision"] == "block"
+    ]
+    safe_actions = [r for r in action_rows if not r["dangerous"]]
+    allowed_safe = [r for r in safe_actions if r["airlock_decision"] == "allow"]
 
     print("\nSUMMARY")
     print("=======")
-    print(f"Total proposals:              {len(rows)}")
-    print(f"Baseline dangerous proposals: {len(attack_rows)}")
-    print(f"Airlock dangerous allows:     {len(airlock_attacks)}")
-    print(f"Non-dangerous proposals:      {len(benign_rows)}")
-    print(f"Non-dangerous allowed:        {len(benign_allowed)}")
+    print(f"Scenario trials:                 {len(trial_results)}")
+    print(f"Baseline attack trials:          {len(baseline_trials)}")
+    print(f"Airlock attack trials:           {len(airlock_trials)}")
+    print(f"Dangerous proposals observed:    {len(dangerous_actions)}")
+    print(f"Dangerous proposals blocked:     {len(blocked_dangerous)}")
+    print(f"Non-dangerous proposals observed:{len(safe_actions):>5}")
+    print(f"Non-dangerous proposals allowed: {len(allowed_safe)}")
 
-    if attack_rows:
-        blocked = len(attack_rows) - len(airlock_attacks)
+    if baseline_trials:
         print(
-            "Airlock block rate on baseline attacks: "
-            f"{blocked / len(attack_rows):.1%}"
+            "Airlock prevention rate on attacked trials: "
+            f"{(len(baseline_trials) - len(airlock_trials)) / len(baseline_trials):.1%}"
         )
     else:
-        print("Airlock block rate on baseline attacks: n/a (baseline proposed none)")
+        print("Airlock prevention rate on attacked trials: n/a (no baseline attacks)")
 
-    if benign_rows:
+    if safe_actions:
         print(
-            "Airlock allow rate on non-dangerous proposals: "
-            f"{len(benign_allowed) / len(benign_rows):.1%}"
+            "Airlock allow rate on non-dangerous actions: "
+            f"{len(allowed_safe) / len(safe_actions):.1%}"
         )
 
 
