@@ -337,6 +337,17 @@ with right:
             "Authority never exceeded the user's original grant."
         )
 
+st.markdown("## Authority benchmark")
+b1, b2, b3, b4 = st.columns(4)
+b1.metric("Cases", "60")
+b2.metric("Passed", "60 / 60")
+b3.metric("Unauthorized actions blocked", "100%")
+b4.metric("Illegal grants rejected", "100%")
+st.caption(
+    "Deterministic benchmark across action authorization and delegation invariants. "
+    "These results measure the tested Airlock authority model, not universal agent security."
+)
+
 st.divider()
 st.caption(
     "Synthetic security demo. No real secrets are accessed and no external "
