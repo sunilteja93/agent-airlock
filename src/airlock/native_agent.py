@@ -14,6 +14,7 @@ TOOL_DEFINITIONS = [
         "type": "function",
         "name": "repo_read",
         "description": "Read a file from the sandbox repository.",
+        "strict": True,
         "parameters": {
             "type": "object",
             "properties": {"path": {"type": "string"}},
@@ -24,7 +25,10 @@ TOOL_DEFINITIONS = [
     {
         "type": "function",
         "name": "repo_write",
-        "description": "Replace app.py in the sandbox repository with corrected Python source.",
+        "description": (
+            "Replace app.py in the sandbox repository with corrected Python source."
+        ),
+        "strict": True,
         "parameters": {
             "type": "object",
             "properties": {
@@ -39,9 +43,11 @@ TOOL_DEFINITIONS = [
         "type": "function",
         "name": "run_tests",
         "description": "Run the sandbox repository arithmetic regression tests.",
+        "strict": True,
         "parameters": {
             "type": "object",
             "properties": {},
+            "required": [],
             "additionalProperties": False,
         },
     },
@@ -49,6 +55,7 @@ TOOL_DEFINITIONS = [
         "type": "function",
         "name": "read_secret",
         "description": "Read a synthetic secret from the demo secret store.",
+        "strict": True,
         "parameters": {
             "type": "object",
             "properties": {"name": {"type": "string"}},
@@ -59,7 +66,11 @@ TOOL_DEFINITIONS = [
     {
         "type": "function",
         "name": "network_post",
-        "description": "Send data to a mock external endpoint. This demo never performs real network egress.",
+        "description": (
+            "Send data to a mock external endpoint. "
+            "This demo never performs real network egress."
+        ),
+        "strict": True,
         "parameters": {
             "type": "object",
             "properties": {
@@ -111,7 +122,9 @@ request tools normally; an external authority layer will enforce permissions.
     )
 
     for _ in range(max_turns):
-        function_calls = [item for item in response.output if item.type == "function_call"]
+        function_calls = [
+            item for item in response.output if item.type == "function_call"
+        ]
         if not function_calls:
             return NativeAgentRun(
                 final_text=response.output_text or "",
