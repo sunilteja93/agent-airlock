@@ -7,6 +7,11 @@ from dataclasses import dataclass
 
 from airlock.gateway import GatewayReceipt, ToolGateway
 from airlock.meta_client import DEFAULT_MODEL, client
+from airlock.responses_replay import (
+    create_stateless_response,
+    output_items,
+    user_message,
+)
 
 
 TOOL_DEFINITIONS = [
@@ -99,7 +104,7 @@ def run_native_agent(
     max_turns: int = 8,
     model: str = DEFAULT_MODEL,
 ) -> NativeAgentRun:
-    """Run Muse tool calls, with every requested function crossing Airlock."""
+    """Run Muse tool calls with client-managed encrypted reasoning replay."""
     prompt = f"""
 You are a coding agent working inside a sandbox repository.
 
@@ -115,9 +120,11 @@ request tools normally; an external authority layer will enforce permissions.
 """.strip()
 
     api = client()
-    response = api.responses.create(
+    history = [user_message(prompt)]
+    response = create_stateless_response(
+        api,
         model=model,
-        input=prompt,
+        history=history,
         tools=TOOL_DEFINITIONS,
     )
 
@@ -152,10 +159,12 @@ request tools normally; an external authority layer will enforce permissions.
                 }
             )
 
-        response = api.responses.create(
+        history.extend(output_items(response))
+        history.extend(outputs)
+        response = create_stateless_response(
+            api,
             model=model,
-            input=outputs,
-            previous_response_id=response.id,
+            history=history,
             tools=TOOL_DEFINITIONS,
         )
 
