@@ -109,7 +109,7 @@ python scripts/benchmark_authority.py
 ```
 
 
-## Top-3 architecture
+## Architecture
 
 The current hackathon architecture separates model reasoning from authority enforcement:
 
@@ -160,6 +160,44 @@ The security claim is deliberately narrow: Airlock enforces the frozen capabilit
 and delegation invariants at the tool boundary. Benchmark and red-team results
 should be reported only as measurements of the tested scenarios.
 
+
+
+## Advanced authorization protocol
+
+Airlock now adds two controls above the basic capability graph.
+
+### Proof-carrying authorization
+
+Every known tool decision can carry a machine-verifiable authority proof bound to
+the frozen task contract. The proof contains the principal lineage, delegated
+capabilities, required capabilities, effective capabilities, missing
+capabilities, decision, and a SHA-256 proof hash.
+
+Both ALLOW and BLOCK decisions can therefore be independently checked without
+trusting the model's explanation.
+
+### Ephemeral exact-action leases
+
+For intentionally high-impact operations, Airlock can require a second,
+attenuating authorization artifact before the executor is reachable. A lease is
+HMAC-bound to:
+
+- the principal
+- the exact tool
+- the exact normalized arguments
+- an expiration time
+- a maximum use count
+
+A modified action, expired lease, revoked lease, or token replay fails closed.
+The lease never creates authority: the normal delegation graph is checked first.
+
+Run the entire protocol demonstration locally, without a Model API call:
+
+```bash
+python scripts/demo_authority_protocol.py
+```
+
+This demo uses only synthetic data and the mock network executor.
 
 ## Muse Red Team results
 
