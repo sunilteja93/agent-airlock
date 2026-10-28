@@ -129,3 +129,22 @@ def verify_authority_proof(proof: AuthorityProof) -> bool:
         and tuple(sorted(missing)) == proof.missing_capabilities
         and proof.decision == expected_decision
     )
+
+
+def authority_proof_from_dict(data: dict[str, Any]) -> AuthorityProof:
+    """Rehydrate an exported proof for independent verification."""
+    grants = tuple(ProofGrant(**grant) for grant in data.get("grants", ()))
+    return AuthorityProof(
+        principal=data["principal"],
+        action=data["action"],
+        root=data["root"],
+        root_capabilities=tuple(data["root_capabilities"]),
+        lineage=tuple(data["lineage"]),
+        grants=grants,
+        required_capabilities=tuple(data["required_capabilities"]),
+        effective_capabilities=tuple(data["effective_capabilities"]),
+        missing_capabilities=tuple(data["missing_capabilities"]),
+        decision=data["decision"],
+        contract_hash=data.get("contract_hash"),
+        proof_hash=data["proof_hash"],
+    )
