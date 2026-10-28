@@ -6,8 +6,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from airlock.authority import Decision
-from airlock.gateway import GatewayReceipt, ToolGateway
-from airlock.leases import LeaseManager
+from airlock.delegation import evaluate_delegated_action
+from airlock.gateway import GatewayReceipt, TOOL_ACTIONS, ToolGateway
+from airlock.leases import AuthorityLease, LeaseManager
 
 
 @dataclass(frozen=True)
@@ -76,6 +77,33 @@ class LeaseProtectedGateway:
             audit_receipt_hash=audit_hash,
         )
 
+    def issue_lease(
+        self,
+        *,
+        principal: str,
+        tool: str,
+        arguments: dict[str, Any],
+        ttl_seconds: float = 60.0,
+        max_uses: int = 1,
+    ) -> AuthorityLease:
+        action = TOOL_ACTIONS.get(tool)
+        if action is None:
+            raise ValueError(f"Unknown tool {tool!r}.")
+        authority = evaluate_delegated_action(
+            graph=self.gateway.graph,
+            principal=principal,
+            action=action,
+        )
+        if authority.decision is Decision.BLOCK:
+            raise PermissionError(authority.reason)
+        return self.lease_manager.issue(
+            principal=principal,
+            tool=tool,
+            arguments=arguments,
+            ttl_seconds=ttl_seconds,
+            max_uses=max_uses,
+        )
+
     def invoke(
         self,
         *,
@@ -87,6 +115,46 @@ class LeaseProtectedGateway:
         lease_id = None
 
         if tool in self.protected_tools:
+            action = TOOL_ACTIONS.get(tool)
+            if action is None:
+                receipt = self.gateway.invoke(
+                    principal=principal,
+                    tool=tool,
+                    arguments=arguments,
+                )
+                return LeaseGatewayReceipt(
+                    principal=principal,
+                    tool=tool,
+                    decision=receipt.decision,
+                    executed=receipt.executed,
+                    reason=receipt.reason,
+                    lease_id=None,
+                    gateway_receipt=receipt,
+                    audit_receipt_hash=receipt.audit_receipt_hash,
+                )
+
+            authority = evaluate_delegated_action(
+                graph=self.gateway.graph,
+                principal=principal,
+                action=action,
+            )
+            if authority.decision is Decision.BLOCK:
+                receipt = self.gateway.invoke(
+                    principal=principal,
+                    tool=tool,
+                    arguments=arguments,
+                )
+                return LeaseGatewayReceipt(
+                    principal=principal,
+                    tool=tool,
+                    decision=receipt.decision,
+                    executed=receipt.executed,
+                    reason=receipt.reason,
+                    lease_id=None,
+                    gateway_receipt=receipt,
+                    audit_receipt_hash=receipt.audit_receipt_hash,
+                )
+
             lease = self.lease_manager.consume(
                 token=lease_token,
                 principal=principal,
