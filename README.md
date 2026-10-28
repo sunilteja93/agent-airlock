@@ -71,7 +71,7 @@ Hackathon build period beginning October 27, 2026.
 
 ## Status
 
-Hackathon build in progress.
+Core implementation complete. Submission packaging, demo recording, and final validation are in progress.
 
 ## Visual demo
 
@@ -128,10 +128,14 @@ Muse Native Tool Calls
         ↓
 Airlock Tool Gateway
         ↓
+Machine-Verifiable Authority Proof
+        ↓
+Optional Ephemeral Exact-Action Lease
+        ↓
 ALLOW → safe executor
 BLOCK → executor never runs
         ↓
-Tamper-evident receipt chain
+Tamper-Evident Receipt Chain
 ```
 
 A separate Muse Red Team can probe the same boundary using synthetic secrets,
@@ -191,13 +195,71 @@ HMAC-bound to:
 A modified action, expired lease, revoked lease, or token replay fails closed.
 The lease never creates authority: the normal delegation graph is checked first.
 
-Run the entire protocol demonstration locally, without a Model API call:
+
+### Dual provenance and authority non-interference
+
+Airlock keeps two different provenance planes:
+
+```text
+INFORMATION PLANE                    AUTHORITY PLANE
+
+trusted user context                 frozen task contract
+untrusted repository content         monotonic delegation graph
+untrusted tool output                exact-action lease
+          │                                   │
+          └──────────── agent reasoning ──────┘
+                              │
+                        Airlock gateway
+```
+
+The information plane is recorded in its own append-only hash chain. The
+authority plane has a separate deterministic fingerprint derived only from the
+frozen contract and delegation graph.
+
+When untrusted information is ingested, Airlock can produce an **authority
+non-interference witness** showing that:
+
+- the information-plane hash changed
+- the authority-plane fingerprint did not change
+- the authorization decision did not change
+- the authority proof before and after is identical
+- the witness itself is hash-bound and independently verifiable
+
+This turns the project principle **Information is not authority** into a
+testable system invariant instead of only a prompt-level instruction.
+
+Run the entire advanced protocol demonstration locally, without a Model API call:
 
 ```bash
 python scripts/demo_authority_protocol.py
 ```
 
-This demo uses only synthetic data and the mock network executor.
+The command demonstrates proof-carrying authorization, one-use exact-action
+leases, replay/mutation/revocation blocking, dual provenance, and authority
+non-interference. It uses only synthetic data and the mock network executor.
+
+
+## Security properties and non-goals
+
+Within the synthetic Airlock runtime, the implementation is designed to enforce
+the following properties:
+
+- delegated authority is monotonic: a child cannot gain a capability its parent
+  does not hold
+- known tool actions are evaluated by a reference monitor outside the model
+- an ALLOW or BLOCK decision can carry an independently verifiable authority
+  proof
+- selected high-impact actions can require a short-lived, exact-action,
+  replay-limited authorization lease
+- untrusted information can change the information ledger without changing the
+  authority graph
+- audit receipts are chained to detect modification of recorded decisions
+
+The current hackathon prototype does **not** claim to solve host compromise,
+model-provider compromise, side channels, operating-system isolation,
+distributed consensus, production key management, or every possible agent
+security failure. Network activity in the demo is mocked and secrets are
+synthetic.
 
 ## Muse Red Team results
 
