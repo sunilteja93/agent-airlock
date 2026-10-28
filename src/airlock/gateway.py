@@ -8,6 +8,7 @@ from typing import Any
 from airlock.audit import ReceiptChain
 from airlock.authority import Decision
 from airlock.delegation import AuthorityGraph, evaluate_delegated_action
+from airlock.proofs import build_authority_proof
 from airlock.tools_runtime import SafeWorkspace
 
 
@@ -32,6 +33,8 @@ class GatewayReceipt:
     arguments: dict[str, Any]
     output: dict[str, Any]
     audit_receipt_hash: str | None = None
+    authority_proof_hash: str | None = None
+    authority_proof: dict[str, Any] | None = None
 
     def model_output(self) -> dict[str, Any]:
         return {
@@ -40,6 +43,7 @@ class GatewayReceipt:
             "reason": self.reason,
             "result": self.output,
             "receipt_hash": self.audit_receipt_hash,
+            "authority_proof_hash": self.authority_proof_hash,
         }
 
 
@@ -75,6 +79,8 @@ class ToolGateway:
                 "effective_capabilities": list(receipt.effective_capabilities),
                 "arguments": receipt.arguments,
                 "output": receipt.output,
+                "authority_proof_hash": receipt.authority_proof_hash,
+                "authority_proof": receipt.authority_proof,
             },
         )
         bound = GatewayReceipt(
@@ -88,6 +94,8 @@ class ToolGateway:
             arguments=receipt.arguments,
             output=receipt.output,
             audit_receipt_hash=audit.receipt_hash,
+            authority_proof_hash=receipt.authority_proof_hash,
+            authority_proof=receipt.authority_proof,
         )
         self.receipts.append(bound)
         return bound
@@ -122,6 +130,15 @@ class ToolGateway:
             principal=principal,
             action=action,
         )
+        contract_hash = (
+            self.receipt_chain.contract_hash if self.receipt_chain is not None else None
+        )
+        proof = build_authority_proof(
+            graph=self.graph,
+            principal=principal,
+            action=action,
+            contract_hash=contract_hash,
+        )
 
         if authority.decision is Decision.BLOCK:
             return self._record(
@@ -137,6 +154,8 @@ class ToolGateway:
                     ),
                     arguments=dict(arguments),
                     output={},
+                    authority_proof_hash=proof.proof_hash,
+                    authority_proof=proof.export(),
                 )
             )
 
@@ -159,6 +178,8 @@ class ToolGateway:
                 ),
                 arguments=dict(arguments),
                 output=output,
+                authority_proof_hash=proof.proof_hash,
+                authority_proof=proof.export(),
             )
         )
 
