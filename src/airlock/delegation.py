@@ -55,6 +55,13 @@ class AuthorityGraph:
         """Return the direct parent grant for a delegated principal."""
         return self._grants.get(principal)
 
+    def grants(self) -> tuple[Grant, ...]:
+        """Return a deterministic snapshot of all direct delegation grants."""
+        return tuple(
+            self._grants[child]
+            for child in sorted(self._grants)
+        )
+
     def effective_capabilities(self, principal: str) -> frozenset[str]:
         if principal == self.root:
             return self.root_capabilities
