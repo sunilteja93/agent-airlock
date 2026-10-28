@@ -51,6 +51,10 @@ class AuthorityGraph:
             capabilities=frozenset(capabilities),
         )
 
+    def grant_for(self, principal: str) -> Grant | None:
+        """Return the direct parent grant for a delegated principal."""
+        return self._grants.get(principal)
+
     def effective_capabilities(self, principal: str) -> frozenset[str]:
         if principal == self.root:
             return self.root_capabilities
