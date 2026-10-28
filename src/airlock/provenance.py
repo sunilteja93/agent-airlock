@@ -208,6 +208,12 @@ def verify_noninterference_witness(
         return False
     if ledger.head_hash != witness.information_after_hash:
         return False
+    if not ledger.records:
+        return False
+    if ledger.records[-1].record_hash != witness.ingested_record_hash:
+        return False
+    if ledger.records[-1].previous_hash != witness.information_before_hash:
+        return False
     if witness.information_before_hash == witness.information_after_hash:
         return False
     if witness.authority_before_hash != witness.authority_after_hash:
