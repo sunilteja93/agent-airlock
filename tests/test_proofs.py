@@ -2,7 +2,11 @@ from dataclasses import replace
 
 from airlock.authority import Decision
 from airlock.delegation import AuthorityGraph
-from airlock.proofs import build_authority_proof, verify_authority_proof
+from airlock.proofs import (
+    authority_proof_from_dict,
+    build_authority_proof,
+    verify_authority_proof,
+)
 
 
 def make_graph() -> AuthorityGraph:
@@ -58,3 +62,15 @@ def test_tampered_proof_fails_verification():
         effective_capabilities=("network.write", "repo.read"),
     )
     assert verify_authority_proof(tampered) is False
+
+
+def test_exported_proof_round_trips_and_verifies():
+    proof = build_authority_proof(
+        graph=make_graph(),
+        principal="code_worker",
+        action="repo.write",
+        contract_hash="c" * 64,
+    )
+    restored = authority_proof_from_dict(proof.export())
+    assert restored.proof_hash == proof.proof_hash
+    assert verify_authority_proof(restored) is True
