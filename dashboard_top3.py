@@ -20,8 +20,11 @@ from airlock.benchmark import run_benchmark, summarize
 from airlock.delegation import AuthorityGraph
 from airlock.fuzz import run_fuzz
 from airlock.gateway import ToolGateway
+from airlock.leased_gateway import LeaseProtectedGateway
+from airlock.leases import LeaseManager
 from airlock.native_agent import run_native_agent
 from airlock.planner import plan_with_muse
+from airlock.proofs import build_authority_proof, verify_authority_proof
 from airlock.red_team import run_red_team
 from airlock.tools_runtime import SafeWorkspace
 
@@ -106,6 +109,114 @@ def aggregate_red_team_results() -> dict:
     return aggregate
 
 
+def advanced_controls_evidence() -> dict:
+    proof_graph = AuthorityGraph(
+        root="user",
+        root_capabilities=frozenset({"repo.read", "repo.write", "tests.run"}),
+    )
+    proof_graph.grant(
+        "user",
+        "worker",
+        frozenset({"repo.read", "repo.write", "tests.run"}),
+    )
+    allow_proof = build_authority_proof(
+        graph=proof_graph,
+        principal="worker",
+        action="repo.write",
+        contract_hash="a" * 64,
+    )
+    block_proof = build_authority_proof(
+        graph=proof_graph,
+        principal="worker",
+        action="network.write",
+        contract_hash="a" * 64,
+    )
+
+    lease_graph = AuthorityGraph(
+        root="user",
+        root_capabilities=frozenset({"network.write"}),
+    )
+    lease_graph.grant("user", "worker", frozenset({"network.write"}))
+    workspace = SafeWorkspace(
+        files={"app.py": "def add(a, b):\n    return a + b\n"}
+    )
+    lease_manager = LeaseManager(
+        secret=b"airlock-local-demo-signing-key-2026"
+    )
+    protected = LeaseProtectedGateway(
+        gateway=ToolGateway(graph=lease_graph, workspace=workspace),
+        lease_manager=lease_manager,
+        protected_tools=frozenset({"network_post"}),
+    )
+
+    approved = {
+        "url": "https://example.invalid/approved",
+        "data": "synthetic",
+    }
+    exact = protected.issue_lease(
+        principal="worker",
+        tool="network_post",
+        arguments=approved,
+        ttl_seconds=60,
+        max_uses=1,
+    )
+    first = protected.invoke(
+        principal="worker",
+        tool="network_post",
+        arguments=approved,
+        lease_token=exact.token,
+    )
+    replay = protected.invoke(
+        principal="worker",
+        tool="network_post",
+        arguments=approved,
+        lease_token=exact.token,
+    )
+
+    mutation_lease = protected.issue_lease(
+        principal="worker",
+        tool="network_post",
+        arguments=approved,
+    )
+    mutation = protected.invoke(
+        principal="worker",
+        tool="network_post",
+        arguments={
+            "url": "https://example.invalid/changed",
+            "data": "synthetic",
+        },
+        lease_token=mutation_lease.token,
+    )
+
+    revoked_lease = protected.issue_lease(
+        principal="worker",
+        tool="network_post",
+        arguments=approved,
+    )
+    lease_manager.revoke(revoked_lease.token)
+    revoked = protected.invoke(
+        principal="worker",
+        tool="network_post",
+        arguments=approved,
+        lease_token=revoked_lease.token,
+    )
+
+    return {
+        "proofs_verified": sum(
+            [
+                verify_authority_proof(allow_proof),
+                verify_authority_proof(block_proof),
+            ]
+        ),
+        "proofs_total": 2,
+        "exact_action_executed": first.executed,
+        "replay_blocked": not replay.executed,
+        "mutation_blocked": not mutation.executed,
+        "revocation_blocked": not revoked.executed,
+        "executor_calls": workspace.executions.get("network_post", 0),
+    }
+
+
 @st.cache_data(show_spinner=False)
 def local_evidence() -> dict:
     benchmark = summarize(run_benchmark())
@@ -114,6 +225,7 @@ def local_evidence() -> dict:
         "benchmark": benchmark,
         "fuzz": fuzz.as_dict(),
         "red_team": aggregate_red_team_results(),
+        "advanced": advanced_controls_evidence(),
     }
 
 
@@ -229,6 +341,7 @@ evidence = local_evidence()
 benchmark = evidence["benchmark"]
 fuzz = evidence["fuzz"]
 measured_red_team = evidence["red_team"]
+advanced = evidence["advanced"]
 
 st.markdown(
     """
@@ -273,6 +386,8 @@ with left:
         "Muse Native Tool Calls\n"
         "      ↓\n"
         "AIRLOCK GATEWAY\n"
+        "      ↓\n"
+        "Authority Proof + Optional Exact-Action Lease\n"
         "      ↓\n"
         "ALLOW → executor\n"
         "BLOCK → executor never runs",
@@ -326,6 +441,33 @@ with right:
         f'Aggregated from {measured_red_team["files"]} committed JSON report(s). '
         f'{measured_red_team["blocked_attempts"]} attempts were blocked; remaining '
         "attempts were authorized operations or legal delegation paths."
+    )
+
+    st.markdown("#### Proof-carrying + ephemeral authorization")
+    a1, a2, a3, a4 = st.columns(4)
+    a1.metric(
+        "Authority proofs",
+        f'{advanced["proofs_verified"]}/{advanced["proofs_total"]} VALID',
+    )
+    a2.metric(
+        "Exact action",
+        "ALLOW ONCE" if advanced["exact_action_executed"] else "FAILED",
+    )
+    a3.metric(
+        "Replay + mutation",
+        "BLOCKED"
+        if advanced["replay_blocked"] and advanced["mutation_blocked"]
+        else "FAILED",
+    )
+    a4.metric(
+        "Revocation",
+        "BLOCKED" if advanced["revocation_blocked"] else "FAILED",
+    )
+    st.caption(
+        "Local synthetic evidence: authorization proofs independently verify; "
+        "high-impact authority can be HMAC-bound to one principal, one tool, "
+        "the exact arguments, an expiry window, and a use limit. Mock executor "
+        f'invocations: {advanced["executor_calls"]}.'
     )
 
     st.write("")
