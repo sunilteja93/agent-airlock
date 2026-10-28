@@ -90,7 +90,11 @@ def build_authority_proof(
         "decision": decision,
         "contract_hash": contract_hash,
     }
-    return AuthorityProof(proof_hash=_hash_payload(base), **base)
+    draft = AuthorityProof(proof_hash="", **base)
+    return AuthorityProof(
+        proof_hash=_hash_payload(draft.canonical_payload()),
+        **base,
+    )
 
 
 def verify_authority_proof(proof: AuthorityProof) -> bool:
