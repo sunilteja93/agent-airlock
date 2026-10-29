@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
+import os
 import sys
 
 import streamlit as st
@@ -71,6 +72,10 @@ st.markdown(
     .safe {border-color:rgba(34,197,94,.5); color:#86efac;}
     .danger {border-color:rgba(239,68,68,.55); color:#fca5a5;}
     .receipt {font-family:monospace; font-size:.78rem; color:#93c5fd;}
+    .status-card {border:1px solid rgba(148,163,184,.22); border-radius:12px;
+                  padding:12px 14px; background:rgba(15,23,42,.32); min-height:84px;}
+    .status-label {font-size:.72rem; color:#94a3b8; margin-bottom:7px;}
+    .status-value {font-size:1.45rem; font-weight:750; line-height:1.05; white-space:nowrap;}
     div[data-testid="stButton"] button {height:3.2rem; font-weight:700;}
     </style>
     """,
@@ -81,6 +86,14 @@ st.markdown(
 def badge(text: str, kind: str = "") -> str:
     css = f"tag {kind}".strip()
     return f'<span class="{css}">{text}</span>'
+
+
+def status_card(column, label: str, value: str) -> None:
+    column.markdown(
+        f'<div class="status-card"><div class="status-label">{label}</div>'
+        f'<div class="status-value">{value}</div></div>',
+        unsafe_allow_html=True,
+    )
 
 
 def aggregate_red_team_results() -> dict:
@@ -475,7 +488,7 @@ with left:
     )
 
 with right:
-    st.subheader("Verified local evidence")
+    st.subheader("Security evaluation")
     e1, e2, e3, e4 = st.columns(4)
     e1.metric("Deterministic cases", f'{benchmark["passed_cases"]}/{benchmark["total_cases"]}')
     e2.metric("Random graphs", f'{fuzz["graphs"]:,}')
@@ -492,7 +505,7 @@ with right:
         "These measurements test the stated Airlock invariants, not universal agent security."
     )
 
-    st.markdown("#### Measured Muse Red Team")
+    st.markdown("#### Muse Red Team")
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Preserved trials", measured_red_team["trials"])
     m2.metric("Attack attempts", measured_red_team["attempts"])
@@ -510,23 +523,28 @@ with right:
         "attempts were authorized operations or legal delegation paths."
     )
 
-    st.markdown("#### Proof-carrying + ephemeral authorization")
-    a1, a2, a3, a4 = st.columns(4)
-    a1.metric(
+    st.markdown("#### Verifiable execution controls")
+    a1, a2 = st.columns(2)
+    status_card(
+        a1,
         "Authority proofs",
         f'{advanced["proofs_verified"]}/{advanced["proofs_total"]} VALID',
     )
-    a2.metric(
+    status_card(
+        a2,
         "Exact action",
         "ALLOW ONCE" if advanced["exact_action_executed"] else "FAILED",
     )
-    a3.metric(
+    a3, a4 = st.columns(2)
+    status_card(
+        a3,
         "Replay + mutation",
         "BLOCKED"
         if advanced["replay_blocked"] and advanced["mutation_blocked"]
         else "FAILED",
     )
-    a4.metric(
+    status_card(
+        a4,
         "Revocation",
         "BLOCKED" if advanced["revocation_blocked"] else "FAILED",
     )
@@ -538,20 +556,25 @@ with right:
     )
 
     st.markdown("#### Dual provenance · information ≠ authority")
-    d1, d2, d3, d4 = st.columns(4)
-    d1.metric(
+    d1, d2 = st.columns(2)
+    status_card(
+        d1,
         "Information ledger",
         "VALID" if dual["ledger_valid"] else "FAILED",
     )
-    d2.metric(
+    status_card(
+        d2,
         "Untrusted context",
         "RECORDED" if dual["information_changed"] else "FAILED",
     )
-    d3.metric(
+    d3, d4 = st.columns(2)
+    status_card(
+        d3,
         "Authority state",
         "UNCHANGED" if dual["authority_unchanged"] else "CHANGED",
     )
-    d4.metric(
+    status_card(
+        d4,
         "Forbidden action",
         dual["decision"].upper(),
     )
@@ -563,11 +586,20 @@ with right:
     )
 
     st.write("")
+    live_api_enabled = os.getenv("AIRLOCK_ENABLE_LIVE_API") == "1"
     run = st.button(
-        "▶ Run live Muse attack + protected workflow",
-        type="primary",
+        "▶ Run live Muse attack + protected workflow"
+        if live_api_enabled
+        else "Live Muse run disabled · preserved evidence shown above",
+        type="primary" if live_api_enabled else "secondary",
         use_container_width=True,
+        disabled=not live_api_enabled,
     )
+    if not live_api_enabled:
+        st.caption(
+            "Recording-safe mode. Set AIRLOCK_ENABLE_LIVE_API=1 before launch "
+            "only when you intentionally want a live Meta API run."
+        )
 
 if run:
     with st.spinner("Muse is compiling authority, red-teaming Airlock, and completing the task..."):
