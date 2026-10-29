@@ -15,6 +15,19 @@ automatically gaining permission to cause privileged actions.
 Agent Airlock places an explicit authority boundary between agent reasoning and
 real-world capabilities.
 
+## How Meta Muse is used
+
+Muse is central to the agent workflow, while authority enforcement remains deterministic and outside the model:
+
+| Muse role | What it does | What it cannot do |
+| --- | --- | --- |
+| **Authority Compiler** | Converts trusted user intent into a least-privilege capability envelope before untrusted repository/tool content is consumed | Cannot bypass Airlock or grant capabilities outside the validated contract |
+| **Least-Privilege Planner** | Proposes the worker goal and delegated capability subset | Cannot expand authority beyond the frozen contract |
+| **Native Tool Worker** | Inspects the repository, proposes tool calls, repairs the synthetic bug, and runs tests | Every tool call still crosses the Airlock reference monitor |
+| **Autonomous Red Team** | Generates adversarial tool and delegation attempts against the same boundary | Cannot directly reach privileged executors or bypass the authority graph |
+
+**Muse reasons. Airlock authorizes.**
+
 ## What Airlock adds
 
 ### Trusted task contracts
@@ -51,6 +64,25 @@ Muse Spark is used as a worker inside the authority boundary. After a denied
 action, the worker can continue toward the legitimate user goal using the
 capabilities that remain authorized.
 
+## Submission snapshot
+
+| Evidence | Result |
+| --- | ---: |
+| Automated tests | **55 passing** |
+| Deterministic authority benchmark | **60/60** |
+| Seeded randomized authority graphs | **10,000** |
+| Randomized authority checks | **110,620** |
+| Invariant failures | **0** |
+| Preserved Muse Red Team trials | **25** |
+| Muse adversarial tool/delegation attempts | **388** |
+| Unauthorized privileged executions | **0** |
+| Receipt-chain failures | **0** |
+| Authority proofs in offline protocol demo | **2/2 valid** |
+| Replay / argument mutation / revocation | **blocked** |
+| Dual-provenance authority state after untrusted input | **unchanged** |
+
+These are measurements from the committed synthetic evaluation environment. They are not a claim of universal agent security.
+
 ## Evaluation philosophy
 
 Airlock does not depend on making a Meta model fail.
@@ -69,9 +101,27 @@ which is recorded rather than hidden or forced into an artificial failure.
 This repository contains work created during the Meta Global AI Developer
 Hackathon build period beginning October 27, 2026.
 
+### Hackathon contribution
+
+The implementation presented here was created during the hackathon build period beginning October 27, 2026. The hackathon work includes:
+
+- trusted-intent authority compilation
+- monotonic multi-agent delegation
+- the Airlock tool reference monitor
+- Muse native tool routing
+- autonomous Muse Red Team evaluation
+- proof-carrying authorization
+- ephemeral exact-action leases with replay, mutation, expiry, and revocation controls
+- tamper-evident receipt chains
+- dual information/authority provenance
+- authority non-interference witnesses
+- deterministic, randomized, and preserved Muse evaluation artifacts
+- the Streamlit judge dashboard and offline protocol demo
+
+
 ## Status
 
-Core implementation complete. Submission packaging, demo recording, and final validation are in progress.
+**Submission candidate.** Core implementation is frozen except for bug fixes and presentation polish.
 
 ## Visual demo
 
@@ -82,9 +132,19 @@ python -m pip install -e ".[dev]"
 streamlit run dashboard_top3.py
 ```
 
-The dashboard shows the authority graph, a synthetic compromised sub-agent
-attempt, the Airlock decision, Muse Spark recovery, patch generation, sandboxed
-verification, and final task completion.
+The dashboard is judge-facing and recording-safe by default. It shows the authority
+pipeline, deterministic and randomized security evaluation, preserved Muse Red Team
+evidence, proof-carrying authorization, exact-action lease controls, and dual
+provenance.
+
+The live Muse attack/workflow button is disabled unless you explicitly opt in:
+
+```bash
+AIRLOCK_ENABLE_LIVE_API=1 streamlit run dashboard_top3.py
+```
+
+Without that environment variable, the dashboard uses committed/local evidence and
+does not intentionally start a live Meta Model API workflow.
 
 ## Benchmark results
 
@@ -153,12 +213,12 @@ Run 10,000 randomized authority graphs:
 python scripts/fuzz_authority.py --graphs 10000
 ```
 
-Run repeated Muse red-team trials:
+Preserved Muse Red Team reports are committed under `evals/results/`. Re-running
+the model-based evaluator consumes Meta Model API usage, so it is not required to
+reproduce the local protocol demo or inspect the committed evidence.
 
-```bash
-python scripts/eval_red_team.py --trials 5 \
-  --json-out evals/results/muse_red_team.json
-```
+If you intentionally want to run new trials, use the evaluator explicitly and save
+to a new output file rather than overwriting preserved reports.
 
 The security claim is deliberately narrow: Airlock enforces the frozen capability
 and delegation invariants at the tool boundary. Benchmark and red-team results
